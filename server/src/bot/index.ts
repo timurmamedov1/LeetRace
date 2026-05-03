@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { leaderboardCommand, handleLeaderboard } from './commands/leaderboard';
 
-// need GuildVoiceStates intent to detect activity participants
+// need GuildVoiceStates to know whos in voice channels for the activity
 export const botClient = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
@@ -15,7 +15,9 @@ export async function startBot() {
     return;
   }
 
-  // register slash commands globally (can take up to an hr to propagate)
+  // register slash commands with discord globally.
+  // heads up: global commands can take up to an hour to show up in servers.
+  // for faster testing during dev, you could use guild-specific commands instead
   const rest = new REST().setToken(token);
   await rest.put(Routes.applicationCommands(appId), {
     body: [leaderboardCommand.toJSON()],
@@ -26,6 +28,7 @@ export async function startBot() {
     console.log(`Bot logged in as ${botClient.user?.tag}`);
   });
 
+  // route incoming slash commands to their handlers
   botClient.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 

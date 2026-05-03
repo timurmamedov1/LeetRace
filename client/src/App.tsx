@@ -3,9 +3,12 @@ import { useGameState } from './hooks/useGameState';
 import Lobby from './components/Lobby';
 import type { DiscordSdkState } from './hooks/useDiscordSdk';
 
+// main entry - handles auth flow then hands off to GameView
 export default function App() {
   const discord = useDiscordSdk();
 
+  // show error if sdk auth failed (usually means the app isnt
+  // running inside discords iframe or creds are wrong)
   if (discord.error) {
     return (
       <div className="flex items-center justify-center h-screen bg-discord-tertiary">
@@ -25,7 +28,8 @@ export default function App() {
   return <GameView discord={discord} />;
 }
 
-// separate component so useGameState hook only runs after auth is done
+// this has to be a seperate component so useGameState hook
+// only runs after auth is done (cant conditionally call hooks)
 function GameView({ discord }: { discord: DiscordSdkState }) {
   const { game, loading, toggleReady, updateSettings } = useGameState(
     discord.channelId!,
@@ -40,6 +44,7 @@ function GameView({ discord }: { discord: DiscordSdkState }) {
     );
   }
 
+  // this happens if everyone left and the session got cleaned up
   if (!game) {
     return (
       <div className="flex items-center justify-center h-screen bg-discord-tertiary">
@@ -59,7 +64,7 @@ function GameView({ discord }: { discord: DiscordSdkState }) {
     );
   }
 
-  // phase 3: active game + scoreboard screens
+  // TODO: active game + scoreboard screens (phase 3)
   return (
     <div className="flex items-center justify-center h-screen bg-discord-tertiary">
       <p className="text-gray-400 text-lg">Game in progress...</p>

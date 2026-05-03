@@ -5,17 +5,17 @@ interface PlayerCardProps {
   isHost: boolean;
 }
 
+// shows a single player in the lobby - avatar, name, host badge, ready status
 export default function PlayerCard({ player, isHost }: PlayerCardProps) {
   return (
     <div className="flex items-center gap-3 bg-discord-tertiary rounded-lg px-4 py-3">
-      {/* avatar */}
+      {/* discord avatar - falls back to default if none set */}
       <img
         src={player.avatarUrl || `https://cdn.discordapp.com/embed/avatars/0.png`}
         alt={player.username}
         className="w-10 h-10 rounded-full"
       />
 
-      {/* name + host badge */}
       <div className="flex-1 min-w-0">
         <span className="text-white font-medium truncate block">{player.username}</span>
         {isHost && (
@@ -23,7 +23,7 @@ export default function PlayerCard({ player, isHost }: PlayerCardProps) {
         )}
       </div>
 
-      {/* ready indicator */}
+      {/* ready/not ready indicator */}
       <span className={`text-sm font-semibold ${player.isReady ? 'text-discord-green' : 'text-gray-500'}`}>
         {player.isReady ? 'Ready' : 'Not Ready'}
       </span>

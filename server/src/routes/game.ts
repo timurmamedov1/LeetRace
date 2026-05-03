@@ -3,9 +3,13 @@ import { requireAuth } from '../middleware/auth';
 import * as gameManager from '../services/gameManager';
 
 export const gameRouter = Router();
+
+// all game routes need auth - user identity comes from the token,
+// not from request bodies (prevents impersonation)
 gameRouter.use(requireAuth);
 
 // get current game state for a channel
+// the client polls this every ~1.5s to stay in sync
 gameRouter.get('/:channelId', (req, res) => {
   const session = gameManager.getGame(req.params.channelId);
   if (!session) {
@@ -15,7 +19,7 @@ gameRouter.get('/:channelId', (req, res) => {
   res.json(gameManager.serializeSession(session));
 });
 
-// create a new lobby (caller becomes host)
+// create a new lobby - whoever calls this becomes the host
 gameRouter.post('/create', (req, res) => {
   const { channelId, guildId, difficulty, timeLimitSeconds } = req.body;
   const user = req.user!;
@@ -32,7 +36,7 @@ gameRouter.post('/create', (req, res) => {
   }
 });
 
-// join an existing lobby
+// join an existing lobby - idempotent, safe to call if already in
 gameRouter.post('/:channelId/join', (req, res) => {
   const user = req.user!;
   try {
@@ -46,7 +50,7 @@ gameRouter.post('/:channelId/join', (req, res) => {
   }
 });
 
-// toggle ready state
+// toggle ready status on/off
 gameRouter.post('/:channelId/ready', (req, res) => {
   const user = req.user!;
   try {
@@ -57,14 +61,14 @@ gameRouter.post('/:channelId/ready', (req, res) => {
   }
 });
 
-// leave the lobby
+// leave the lobby - if the host leaves, ownership transfers to next player
 gameRouter.post('/:channelId/leave', (req, res) => {
   const user = req.user!;
   const session = gameManager.leaveGame(req.params.channelId, user.discordId);
   res.json(session ? gameManager.serializeSession(session) : { left: true });
 });
 
-// update difficulty / time limit (host only)
+// change difficulty or time limit - host only
 gameRouter.post('/:channelId/settings', (req, res) => {
   const user = req.user!;
   const { difficulty, timeLimitSeconds } = req.body;

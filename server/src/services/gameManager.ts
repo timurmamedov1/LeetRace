@@ -1,11 +1,16 @@
 import { randomUUID } from 'crypto';
 import { GameSession, PlayerState, Difficulty } from '../types';
 
-// all active sessions keyed by channelId — one game per voice channel
+// all active sessions keyed by channelId — only one game per voice channel at a time.
+// these live in memory only, nothing here touches the db.
+// stats/results get persisted to sqlite after a round ends (not here tho)
 const sessions = new Map<string, GameSession>();
 
-const VALID_TIME_LIMITS = [300, 600, 900, 1200, 1800]; // 5, 10, 15, 20, 30 min
+// the allowed time limits in seconds (5, 10, 15, 20, 30 min)
+const VALID_TIME_LIMITS = [300, 600, 900, 1200, 1800];
 
+// creates a new lobby session. the person who calls this becomes host.
+// if theres already a session in this channel it gets replaced
 export function createGame(
   channelId: string,
   guildId: string,
@@ -13,9 +18,9 @@ export function createGame(
   hostUsername: string,
   hostAvatarUrl: string,
   difficulty: Difficulty = 'Medium',
-  timeLimitSeconds: number = 900,
+  timeLimitSeconds: number = 900, // default 15 min
 ): GameSession {
-  // clean up any existing session in this channel
+  // wipe any existing session in this channel
   sessions.delete(channelId);
 
   const host: PlayerState = {
@@ -48,6 +53,8 @@ export function getGame(channelId: string): GameSession | undefined {
   return sessions.get(channelId);
 }
 
+// adds a player to the lobby. if they're already in, just returns the session
+// (makes it safe to call multiple times without worrying about dupes)
 export function joinGame(
   channelId: string,
   discordId: string,
@@ -71,25 +78,29 @@ export function joinGame(
   return session;
 }
 
+// removes a player from the game. if the host leaves, ownership
+// passes to whoever joined next. if everyones gone, session gets deleted
 export function leaveGame(channelId: string, discordId: string): GameSession | null {
   const session = sessions.get(channelId);
   if (!session) return null;
 
   session.players.delete(discordId);
 
-  // if host left, pass it to the next player or kill the session
   if (discordId === session.hostId) {
     const remaining = Array.from(session.players.keys());
     if (remaining.length === 0) {
+      // nobody left, clean up
       sessions.delete(channelId);
       return null;
     }
+    // hand off host to next person
     session.hostId = remaining[0];
   }
 
   return session;
 }
 
+// flips a players ready state on/off
 export function toggleReady(channelId: string, discordId: string): GameSession {
   const session = sessions.get(channelId);
   if (!session) throw new Error('No game found for this channel');
@@ -102,6 +113,7 @@ export function toggleReady(channelId: string, discordId: string): GameSession {
   return session;
 }
 
+// lets the host change difficulty and/or time limit before starting
 export function updateSettings(
   channelId: string,
   hostId: string,
@@ -120,7 +132,8 @@ export function updateSettings(
   return session;
 }
 
-// convert Map<string, PlayerState> -> array for JSON serialization
+// converts the session to something JSON.stringify can handle.
+// the players Map becomes a plain array since Maps serialize to "{}"
 export function serializeSession(session: GameSession) {
   return {
     ...session,

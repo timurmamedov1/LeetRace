@@ -2,6 +2,8 @@ import { GameSession, Difficulty } from '../types';
 import PlayerCard from './PlayerCard';
 
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard'];
+
+// time options in seconds - displayed as minutes in the ui
 const TIME_OPTIONS = [
   { label: '5 min', value: 300 },
   { label: '10 min', value: 600 },
@@ -10,6 +12,7 @@ const TIME_OPTIONS = [
   { label: '30 min', value: 1800 },
 ];
 
+// color coding to match leetcode's difficulty colors (ish)
 const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   Easy: 'text-discord-green',
   Medium: 'text-discord-yellow',
@@ -27,17 +30,20 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
   const isHost = game.hostId === currentUserId;
   const currentPlayer = game.players.find(p => p.discordId === currentUserId);
   const readyCount = game.players.filter(p => p.isReady).length;
+
+  // need at least 2 ppl ready to start a race
   const canStart = readyCount >= 2;
 
   return (
     <div className="flex flex-col h-screen bg-discord-tertiary p-6 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-center mb-6">LeetRace</h1>
 
-      {/* game settings - only host can change */}
+      {/* settings panel - only host can actually change these,
+          everyone else just sees the current values */}
       <div className="bg-discord-secondary rounded-lg p-4 mb-4">
         <h2 className="text-sm text-gray-400 uppercase tracking-wide mb-3">Settings</h2>
 
-        {/* difficulty */}
+        {/* difficulty selector */}
         <div className="mb-3">
           <label className="text-xs text-gray-400 block mb-1">Difficulty</label>
           <div className="flex gap-2">
@@ -57,7 +63,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
           </div>
         </div>
 
-        {/* time limit */}
+        {/* time limit selector */}
         <div>
           <label className="text-xs text-gray-400 block mb-1">Time Limit</label>
           <div className="flex gap-2 flex-wrap">
@@ -78,7 +84,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
         </div>
       </div>
 
-      {/* player list */}
+      {/* player list - shows everyone in the lobby w/ ready status */}
       <div className="flex-1 overflow-y-auto">
         <h2 className="text-sm text-gray-400 uppercase tracking-wide mb-2">
           Players ({game.players.length})
@@ -94,8 +100,9 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
         </div>
       </div>
 
-      {/* bottom actions */}
+      {/* action buttons at the bottom */}
       <div className="mt-4 flex flex-col gap-2">
+        {/* ready toggle - everyone gets this */}
         <button
           onClick={onReady}
           className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
@@ -107,6 +114,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
           {currentPlayer?.isReady ? 'Ready!' : 'Ready Up'}
         </button>
 
+        {/* start button - only the host sees this */}
         {isHost && (
           <button
             disabled={!canStart}

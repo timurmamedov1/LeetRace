@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchApi } from '../lib/api';
 import { GameSession, Difficulty } from '../types';
 
+// how often we check the server for updates from other players
 const POLL_INTERVAL = 1500;
 
 interface GameActions {
@@ -12,27 +13,29 @@ interface GameActions {
   leaveGame: () => Promise<void>;
 }
 
+// manages the game lifecycle - creates or joins a game on mount,
+// then polls the server every 1.5s to stay in sync with other players
 export function useGameState(channelId: string, guildId: string): GameActions {
   const [game, setGame] = useState<GameSession | null>(null);
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
 
-  // on mount: fetch existing game or create a new one, then start polling
+  // runs once on mount to either join an existing game or create a new one
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
     async function initGame() {
       try {
-        // check if a game already exists in this channel
+        // see if theres already a game going in this voice channel
         const existing = await fetchApi<GameSession>(`/game/${channelId}`).catch(() => null);
 
         if (existing) {
-          // join it (idempotent if already in)
+          // game exists, hop in (joinGame is idempotent so no worries if we're already in)
           const joined = await fetchApi<GameSession>(`/game/${channelId}/join`, { method: 'POST' });
           setGame(joined);
         } else {
-          // first one here, create the lobby
+          // nobody here yet, we're creating the lobby (and become host)
           const created = await fetchApi<GameSession>('/game/create', {
             method: 'POST',
             body: JSON.stringify({ channelId, guildId }),
@@ -49,7 +52,8 @@ export function useGameState(channelId: string, guildId: string): GameActions {
     initGame();
   }, [channelId, guildId]);
 
-  // poll for game state updates from other players
+  // poll for updates - this is how we see other players joining, readying up, etc.
+  // (using polling instead of websockets to keep things simple for v1)
   useEffect(() => {
     if (loading) return;
 
@@ -58,7 +62,7 @@ export function useGameState(channelId: string, guildId: string): GameActions {
         const state = await fetchApi<GameSession>(`/game/${channelId}`);
         setGame(state);
       } catch {
-        // game might have been deleted (everyone left)
+        // 404 probably means everyone left and session got cleaned up
         setGame(null);
       }
     }, POLL_INTERVAL);
