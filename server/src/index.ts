@@ -6,6 +6,7 @@ config({ path: path.resolve(__dirname, '../../.env') });
 import express from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth';
+import { gameRouter } from './routes/game';
 import { startBot } from './bot';
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // routes
 app.use('/api/auth', authRouter);
+app.use('/api/game', gameRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

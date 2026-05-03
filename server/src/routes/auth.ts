@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { storeUser } from '../middleware/auth';
 
 export const authRouter = Router();
 
@@ -31,6 +32,22 @@ authRouter.post('/token', async (req, res) => {
       res.status(response.status).json({ error: 'Token exchange failed', details: data });
       return;
     }
+
+    // fetch the user's profile so we can identify them on future requests
+    const userRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${data.access_token}` },
+    });
+    const userData = await userRes.json();
+
+    const avatarUrl = userData.avatar
+      ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+      : '';
+
+    storeUser(data.access_token, {
+      discordId: userData.id,
+      username: userData.global_name || userData.username,
+      avatarUrl,
+    });
 
     res.json({ access_token: data.access_token });
   } catch (err) {
