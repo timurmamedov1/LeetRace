@@ -15,12 +15,14 @@ export async function startBot() {
     return;
   }
 
-  // register slash commands with discord globally.
-  // heads up: global commands can take up to an hour to show up in servers.
-  // for faster testing during dev, you could use guild-specific commands instead
+  // fetch existing commands first so we dont accidentally nuke
+  // discord's auto-generated entry point command for the activity
   const rest = new REST().setToken(token);
+  const existingCommands = await rest.get(Routes.applicationCommands(appId)) as any[];
+  const entryPointCommands = existingCommands.filter((c: any) => c.type === 4);
+
   await rest.put(Routes.applicationCommands(appId), {
-    body: [leaderboardCommand.toJSON()],
+    body: [...entryPointCommands, leaderboardCommand.toJSON()],
   });
   console.log('Registered slash commands');
 

@@ -3,16 +3,14 @@ import { useGameState } from './hooks/useGameState';
 import Lobby from './components/Lobby';
 import type { DiscordSdkState } from './hooks/useDiscordSdk';
 
-// main entry - handles auth flow then hands off to GameView
+// main entry — handles auth flow then hands off to game
 export default function App() {
   const discord = useDiscordSdk();
 
-  // show error if sdk auth failed (usually means the app isnt
-  // running inside discords iframe or creds are wrong)
   if (discord.error) {
     return (
       <div className="flex items-center justify-center h-screen bg-discord-tertiary">
-        <p className="text-discord-red text-lg">Error: {discord.error}</p>
+        <p className="text-red-400 text-lg">Error: {discord.error}</p>
       </div>
     );
   }
