@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DiscordSDK } from '@discord/embedded-app-sdk';
+import { setAuthToken } from '../lib/api';
 
 interface User {
   id: string;
@@ -11,11 +12,13 @@ interface User {
 // single SDK instance, has to be created at module level or it breaks
 const discordSdk = new DiscordSDK(import.meta.env.VITE_DISCORD_APP_ID);
 
-interface DiscordSdkState {
+export interface DiscordSdkState {
   authenticated: boolean;
   user: User | null;
   error: string | null;
   sdk: DiscordSDK;
+  channelId: string | null;
+  guildId: string | null;
 }
 
 // handles the full oauth2 flow for the activity iframe
@@ -51,8 +54,12 @@ export function useDiscordSdk(): DiscordSdkState {
 
         if (!res.ok) throw new Error('Token exchange failed');
 
-        // finish auth with the token we got back
         const { access_token } = await res.json();
+
+        // store token so all future api calls include it
+        setAuthToken(access_token);
+
+        // finish auth with the token we got back
         const auth = await discordSdk.commands.authenticate({ access_token });
 
         if (!cancelled) {
@@ -70,5 +77,13 @@ export function useDiscordSdk(): DiscordSdkState {
     return () => { cancelled = true; };
   }, []);
 
-  return { authenticated, user, error, sdk: discordSdk };
+  return {
+    authenticated,
+    user,
+    error,
+    sdk: discordSdk,
+    // these come from the iframe url params, available immediately
+    channelId: discordSdk.channelId,
+    guildId: discordSdk.guildId,
+  };
 }

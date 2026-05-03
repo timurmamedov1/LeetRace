@@ -1,17 +1,20 @@
 import { useDiscordSdk } from './hooks/useDiscordSdk';
+import { useGameState } from './hooks/useGameState';
+import Lobby from './components/Lobby';
+import type { DiscordSdkState } from './hooks/useDiscordSdk';
 
 export default function App() {
-  const { authenticated, user, error } = useDiscordSdk();
+  const discord = useDiscordSdk();
 
-  if (error) {
+  if (discord.error) {
     return (
       <div className="flex items-center justify-center h-screen bg-discord-tertiary">
-        <p className="text-discord-red text-lg">Error: {error}</p>
+        <p className="text-discord-red text-lg">Error: {discord.error}</p>
       </div>
     );
   }
 
-  if (!authenticated) {
+  if (!discord.authenticated) {
     return (
       <div className="flex items-center justify-center h-screen bg-discord-tertiary">
         <p className="text-gray-400 text-lg">Connecting to Discord...</p>
@@ -19,12 +22,47 @@ export default function App() {
     );
   }
 
+  return <GameView discord={discord} />;
+}
+
+// separate component so useGameState hook only runs after auth is done
+function GameView({ discord }: { discord: DiscordSdkState }) {
+  const { game, loading, toggleReady, updateSettings } = useGameState(
+    discord.channelId!,
+    discord.guildId!,
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-discord-tertiary">
+        <p className="text-gray-400 text-lg">Loading game...</p>
+      </div>
+    );
+  }
+
+  if (!game) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-discord-tertiary">
+        <p className="text-gray-400 text-lg">No active game</p>
+      </div>
+    );
+  }
+
+  if (game.state === 'lobby') {
+    return (
+      <Lobby
+        game={game}
+        currentUserId={discord.user!.id}
+        onReady={toggleReady}
+        onSettingsChange={updateSettings}
+      />
+    );
+  }
+
+  // phase 3: active game + scoreboard screens
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-discord-tertiary">
-      <h1 className="text-3xl font-bold mb-4">LeetCode Race</h1>
-      <p className="text-gray-300 text-lg">
-        Welcome, <span className="text-discord-green font-semibold">{user?.username}</span>!
-      </p>
+    <div className="flex items-center justify-center h-screen bg-discord-tertiary">
+      <p className="text-gray-400 text-lg">Game in progress...</p>
     </div>
   );
 }
