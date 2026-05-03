@@ -1,5 +1,5 @@
 {
-  "name": "leetcode-race",
+  "name": "leetrace",
   "private": true,
   "workspaces": ["client", "server"],
   "scripts": {

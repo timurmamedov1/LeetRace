@@ -1,5 +1,5 @@
 {
-  "name": "leetcode-race-client",
+  "name": "leetrace-client",
   "private": true,
   "type": "module",
   "scripts": {

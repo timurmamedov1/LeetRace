@@ -1,5 +1,5 @@
 {
-  "name": "leetcode-race-server",
+  "name": "leetrace-server",
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",

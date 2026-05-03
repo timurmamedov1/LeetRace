@@ -31,7 +31,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
 
   return (
     <div className="flex flex-col h-screen bg-discord-tertiary p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold text-center mb-6">LeetCode Race</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">LeetRace</h1>
 
       {/* game settings - only host can change */}
       <div className="bg-discord-secondary rounded-lg p-4 mb-4">
