@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth';
 import { gameRouter } from './routes/game';
 import { startBot } from './bot';
 import { prefetchProblems } from './services/leetcode';
+import { initDatabase } from './db/database';
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,10 @@ app.use('/api/game', gameRouter);  // lobby/game state management
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// init sqlite before starting the server. schema runs on first boot,
+// subsequent starts are a no-op bc of IF NOT EXISTS
+initDatabase();
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
