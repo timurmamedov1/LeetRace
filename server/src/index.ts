@@ -9,6 +9,7 @@ import cors from 'cors';
 import { authRouter } from './routes/auth';
 import { gameRouter } from './routes/game';
 import { startBot } from './bot';
+import { prefetchProblems } from './services/leetcode';
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,9 @@ app.get('/api/health', (_req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // warm the leetcode problem cache in the background so the first
+  // game start doesnt have to wait for the api call
+  prefetchProblems();
 });
 
 // companion bot runs in the same process for simplicity.
