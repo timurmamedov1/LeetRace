@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { GameSession, Difficulty } from '../types';
 import PlayerCard from './PlayerCard';
 
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
-// time options in seconds - displayed as minutes in the ui
+// time options in seconds, displayed as minutes in the ui
 const TIME_OPTIONS = [
   { label: '5 min', value: 300 },
   { label: '10 min', value: 600 },
@@ -24,21 +25,59 @@ interface LobbyProps {
   currentUserId: string;
   onReady: () => void;
   onSettingsChange: (settings: { difficulty?: Difficulty; timeLimitSeconds?: number }) => void;
+  onStart: () => void;
+  onSetLeetcodeUsername: (username: string) => Promise<void>;
 }
 
-export default function Lobby({ game, currentUserId, onReady, onSettingsChange }: LobbyProps) {
+export default function Lobby({ game, currentUserId, onReady, onSettingsChange, onStart, onSetLeetcodeUsername }: LobbyProps) {
   const isHost = game.hostId === currentUserId;
   const currentPlayer = game.players.find(p => p.discordId === currentUserId);
   const readyCount = game.players.filter(p => p.isReady).length;
+  const [lcInput, setLcInput] = useState(currentPlayer?.leetcodeUsername || '');
+  const [savingLc, setSavingLc] = useState(false);
 
   // need at least 2 ppl ready to start a race
   const canStart = readyCount >= 2;
+  const hasLeetcodeUsername = !!currentPlayer?.leetcodeUsername;
+
+  async function handleSaveLeetcode() {
+    if (!lcInput.trim()) return;
+    setSavingLc(true);
+    await onSetLeetcodeUsername(lcInput.trim());
+    setSavingLc(false);
+  }
 
   return (
     <div className="flex flex-col h-screen bg-discord-tertiary p-6 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-center mb-6">LeetRace</h1>
 
-      {/* settings panel - only host can actually change these,
+      {/* leetcode username prompt. needs to be set before you can play */}
+      {!hasLeetcodeUsername && (
+        <div className="bg-discord-secondary rounded-lg p-4 mb-4 border border-discord-yellow/30">
+          <label className="text-sm text-discord-yellow block mb-2">
+            Enter your LeetCode username to play
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={lcInput}
+              onChange={(e) => setLcInput(e.target.value)}
+              placeholder="LeetCode username"
+              className="flex-1 px-3 py-2 rounded bg-discord-tertiary text-white placeholder-gray-500 border border-gray-600 focus:border-discord-blurple focus:outline-none text-sm"
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveLeetcode()}
+            />
+            <button
+              onClick={handleSaveLeetcode}
+              disabled={savingLc || !lcInput.trim()}
+              className="px-4 py-2 rounded bg-discord-blurple text-white text-sm font-medium hover:bg-discord-blurple/80 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingLc ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* settings panel, only host can actually change these,
           everyone else just sees the current values */}
       <div className="bg-discord-secondary rounded-lg p-4 mb-4">
         <h2 className="text-sm text-gray-400 uppercase tracking-wide mb-3">Settings</h2>
@@ -84,7 +123,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
         </div>
       </div>
 
-      {/* player list - shows everyone in the lobby w/ ready status */}
+      {/* player list, shows everyone in the lobby w/ ready status */}
       <div className="flex-1 overflow-y-auto">
         <h2 className="text-sm text-gray-400 uppercase tracking-wide mb-2">
           Players ({game.players.length})
@@ -102,7 +141,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
 
       {/* action buttons at the bottom */}
       <div className="mt-4 flex flex-col gap-2">
-        {/* ready toggle - everyone gets this */}
+        {/* ready toggle, everyone gets this */}
         <button
           onClick={onReady}
           className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
@@ -114,9 +153,10 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange }
           {currentPlayer?.isReady ? 'Ready!' : 'Ready Up'}
         </button>
 
-        {/* start button - only the host sees this */}
+        {/* start button, only the host sees this */}
         {isHost && (
           <button
+            onClick={onStart}
             disabled={!canStart}
             className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
               canStart

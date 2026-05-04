@@ -5,11 +5,11 @@ interface PlayerCardProps {
   isHost: boolean;
 }
 
-// shows a single player in the lobby - avatar, name, host badge, ready status
+// shows a single player in the lobby (avatar, name, host badge, ready status)
 export default function PlayerCard({ player, isHost }: PlayerCardProps) {
   return (
     <div className="flex items-center gap-3 bg-discord-tertiary rounded-lg px-4 py-3">
-      {/* discord avatar - falls back to default if none set */}
+      {/* discord avatar, falls back to default if none set */}
       <img
         src={player.avatarUrl || `https://cdn.discordapp.com/embed/avatars/0.png`}
         alt={player.username}
@@ -18,9 +18,16 @@ export default function PlayerCard({ player, isHost }: PlayerCardProps) {
 
       <div className="flex-1 min-w-0">
         <span className="text-white font-medium truncate block">{player.username}</span>
-        {isHost && (
-          <span className="text-xs text-discord-yellow">Host</span>
-        )}
+        <div className="flex gap-2 text-xs">
+          {isHost && (
+            <span className="text-discord-yellow">Host</span>
+          )}
+          {player.leetcodeUsername ? (
+            <span className="text-gray-500">LC: {player.leetcodeUsername}</span>
+          ) : (
+            <span className="text-discord-red">No LeetCode username</span>
+          )}
+        </div>
       </div>
 
       {/* ready/not ready indicator */}

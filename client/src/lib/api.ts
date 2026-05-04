@@ -12,7 +12,7 @@ export function setAuthToken(token: string) {
   authToken = token;
 }
 
-// generic fetch helper - auto-attaches auth header and content type,
+// generic fetch helper, auto-attaches auth header and content type.
 // throws on non-2xx responses so callers can just catch
 export async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
@@ -26,6 +26,10 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
     ...options,
     headers: { ...headers, ...options?.headers },
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    // try to pull the servers error message out of the response body
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || `API error: ${res.status}`);
+  }
   return res.json();
 }

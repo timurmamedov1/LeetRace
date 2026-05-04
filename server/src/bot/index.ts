@@ -11,7 +11,7 @@ export async function startBot() {
   const appId = process.env.DISCORD_APP_ID;
 
   if (!token || !appId) {
-    console.warn('Bot token or app ID missing — skipping bot startup');
+    console.warn('Bot token or app ID missing, skipping bot startup');
     return;
   }
 

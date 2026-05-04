@@ -1,9 +1,11 @@
 import { useDiscordSdk } from './hooks/useDiscordSdk';
 import { useGameState } from './hooks/useGameState';
 import Lobby from './components/Lobby';
+import GameRound from './components/GameRound';
+import Scoreboard from './components/Scoreboard';
 import type { DiscordSdkState } from './hooks/useDiscordSdk';
 
-// main entry — handles auth flow then hands off to game
+// main entry, handles auth flow then hands off to game
 export default function App() {
   const discord = useDiscordSdk();
 
@@ -29,10 +31,10 @@ export default function App() {
 // this has to be a seperate component so useGameState hook
 // only runs after auth is done (cant conditionally call hooks)
 function GameView({ discord }: { discord: DiscordSdkState }) {
-  const { game, loading, toggleReady, updateSettings } = useGameState(
-    discord.channelId!,
-    discord.guildId!,
-  );
+  const {
+    game, loading, toggleReady, updateSettings,
+    startGame, completeChallenge, returnToLobby, setLeetcodeUsername,
+  } = useGameState(discord.channelId!, discord.guildId!);
 
   if (loading) {
     return (
@@ -51,21 +53,38 @@ function GameView({ discord }: { discord: DiscordSdkState }) {
     );
   }
 
+  const userId = discord.user!.id;
+
   if (game.state === 'lobby') {
     return (
       <Lobby
         game={game}
-        currentUserId={discord.user!.id}
+        currentUserId={userId}
         onReady={toggleReady}
         onSettingsChange={updateSettings}
+        onStart={startGame}
+        onSetLeetcodeUsername={setLeetcodeUsername}
       />
     );
   }
 
-  // TODO: active game + scoreboard screens (phase 3)
+  if (game.state === 'active') {
+    return (
+      <GameRound
+        game={game}
+        currentUserId={userId}
+        sdk={discord.sdk}
+        onComplete={completeChallenge}
+      />
+    );
+  }
+
+  // game.state === 'finished'
   return (
-    <div className="flex items-center justify-center h-screen bg-discord-tertiary">
-      <p className="text-gray-400 text-lg">Game in progress...</p>
-    </div>
+    <Scoreboard
+      game={game}
+      currentUserId={userId}
+      onReturnToLobby={returnToLobby}
+    />
   );
 }

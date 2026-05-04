@@ -11,12 +11,12 @@ interface User {
 
 // single SDK instance, has to be created at module level or it breaks.
 // wrapped in try/catch bc the constructor throws if we're not inside
-// discord's iframe (missing frame_id param) - lets us test in browser
+// discord's iframe (missing frame_id param). lets us test in browser
 let discordSdk: DiscordSDK | null = null;
 try {
   discordSdk = new DiscordSDK(import.meta.env.VITE_DISCORD_APP_ID);
 } catch {
-  console.warn('Discord SDK init failed - probably not in an iframe');
+  console.warn('Discord SDK init failed, probably not in an iframe');
 }
 
 export interface DiscordSdkState {

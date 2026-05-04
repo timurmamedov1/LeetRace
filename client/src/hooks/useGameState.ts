@@ -11,9 +11,13 @@ interface GameActions {
   toggleReady: () => Promise<void>;
   updateSettings: (settings: { difficulty?: Difficulty; timeLimitSeconds?: number }) => Promise<void>;
   leaveGame: () => Promise<void>;
+  startGame: () => Promise<void>;
+  completeChallenge: () => Promise<{ verified: boolean; error?: string }>;
+  returnToLobby: () => Promise<void>;
+  setLeetcodeUsername: (username: string) => Promise<void>;
 }
 
-// manages the game lifecycle - creates or joins a game on mount,
+// manages the game lifecycle. creates or joins a game on mount,
 // then polls the server every 1.5s to stay in sync with other players
 export function useGameState(channelId: string, guildId: string): GameActions {
   const [game, setGame] = useState<GameSession | null>(null);
@@ -52,7 +56,7 @@ export function useGameState(channelId: string, guildId: string): GameActions {
     initGame();
   }, [channelId, guildId]);
 
-  // poll for updates - this is how we see other players joining, readying up, etc.
+  // poll for updates, this is how we see other players joining, readying up, etc.
   // (using polling instead of websockets to keep things simple for v1)
   useEffect(() => {
     if (loading) return;
@@ -88,5 +92,43 @@ export function useGameState(channelId: string, guildId: string): GameActions {
     setGame(null);
   }, [channelId]);
 
-  return { game, loading, toggleReady, updateSettings, leaveGame };
+  // host kicks off the round
+  const startGame = useCallback(async () => {
+    const updated = await fetchApi<GameSession>(`/game/${channelId}/start`, { method: 'POST' });
+    setGame(updated);
+  }, [channelId]);
+
+  // player claims they solved it, server checks their leetcode profile
+  const completeChallenge = useCallback(async (): Promise<{ verified: boolean; error?: string }> => {
+    try {
+      const updated = await fetchApi<GameSession & { verified: boolean }>(`/game/${channelId}/complete`, {
+        method: 'POST',
+      });
+      setGame(updated);
+      return { verified: true };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Verification failed';
+      return { verified: false, error: msg };
+    }
+  }, [channelId]);
+
+  // host sends everyone back to the lobby after results
+  const returnToLobby = useCallback(async () => {
+    const updated = await fetchApi<GameSession>(`/game/${channelId}/lobby`, { method: 'POST' });
+    setGame(updated);
+  }, [channelId]);
+
+  // set the player's leetcode username
+  const setLeetcodeUsername = useCallback(async (username: string) => {
+    const updated = await fetchApi<GameSession>(`/game/${channelId}/leetcode-username`, {
+      method: 'POST',
+      body: JSON.stringify({ leetcodeUsername: username }),
+    });
+    setGame(updated);
+  }, [channelId]);
+
+  return {
+    game, loading, toggleReady, updateSettings, leaveGame,
+    startGame, completeChallenge, returnToLobby, setLeetcodeUsername,
+  };
 }

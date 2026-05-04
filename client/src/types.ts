@@ -1,4 +1,4 @@
-// client-side types - mirrors the server types but uses arrays instead of Maps
+// client-side types. mirrors the server types but uses arrays instead of Maps
 // bc Maps dont serialize over JSON (they just become empty objects)
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
@@ -8,6 +8,7 @@ export interface Player {
   discordId: string;
   username: string;
   avatarUrl: string;
+  leetcodeUsername: string | null;
   isReady: boolean;
   completedAt: number | null;  // unix ts when player clicked "Done"
   rank: number | null;         // null means they dnf'd
