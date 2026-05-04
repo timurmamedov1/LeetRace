@@ -9,12 +9,13 @@ export interface PlayerState {
   discordId: string;
   username: string;
   avatarUrl: string;
+  leetcodeUsername: string | null;
   isReady: boolean;
   completedAt: number | null;  // unix ts when player clicked "Done"
   rank: number | null;         // null means dnf
 }
 
-// one session per voice channel. lives entirely in memory —
+// one session per voice channel. lives entirely in memory,
 // we only write to the db after a round finishes to save stats
 export interface GameSession {
   id: string;

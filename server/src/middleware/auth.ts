@@ -4,6 +4,7 @@ export interface AuthUser {
   discordId: string;
   username: string;
   avatarUrl: string;
+  leetcodeUsername: string | null;
 }
 
 // extends express's Request type so we can do req.user in route handlers
@@ -23,6 +24,16 @@ const tokenStore = new Map<string, AuthUser>();
 
 export function storeUser(accessToken: string, user: AuthUser) {
   tokenStore.set(accessToken, user);
+}
+
+// updates the leetcode username for a user. called when they
+// set it in the lobby before a game starts
+export function setLeetcodeUsername(discordId: string, leetcodeUsername: string) {
+  for (const user of tokenStore.values()) {
+    if (user.discordId === discordId) {
+      user.leetcodeUsername = leetcodeUsername;
+    }
+  }
 }
 
 // middleware that checks for a valid Bearer token on protected routes.

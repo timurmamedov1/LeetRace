@@ -53,6 +53,7 @@ authRouter.post('/token', async (req, res) => {
       discordId: userData.id,
       username: userData.global_name || userData.username,
       avatarUrl,
+      leetcodeUsername: null,
     });
 
     res.json({ access_token: data.access_token });
