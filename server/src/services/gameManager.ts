@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { GameSession, PlayerState, Difficulty } from '../types';
 import { getRandomProblem, verifyCompletion } from './leetcode';
+import { persistMatchResults } from '../db/queries';
 
 // all active sessions keyed by channelId, only one game per voice channel at a time.
 // these live in memory only, nothing here touches the db.
@@ -252,6 +253,14 @@ export function finishGame(channelId: string): GameSession | null {
 
   // anyone who didnt complete stays rank=null (DNF)
   console.log(`Game finished in ${channelId}`);
+
+  // save match results and update user stats in sqlite
+  try {
+    persistMatchResults(session);
+  } catch (err) {
+    console.error('Failed to persist match results:', err);
+  }
+
   return session;
 }
 
