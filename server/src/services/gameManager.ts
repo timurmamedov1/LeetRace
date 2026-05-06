@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { GameSession, PlayerState, Difficulty } from '../types';
 import { getRandomProblem, verifyCompletion } from './leetcode';
 import { persistMatchResults } from '../db/queries';
+import { postGameStarted, postGameResults } from '../bot/notifications';
 
 // all active sessions keyed by channelId, only one game per voice channel at a time.
 // these live in memory only, nothing here touches the db.
@@ -195,6 +196,12 @@ export async function startGame(channelId: string, hostId: string): Promise<Game
   gameTimers.set(channelId, timer);
 
   console.log(`Game started in ${channelId}: ${problem.title} (${problem.difficulty})`);
+
+  // fire and forget, dont block the game if the bot cant post
+  postGameStarted(session).catch(err =>
+    console.error('Failed to post game started embed:', err),
+  );
+
   return session;
 }
 
@@ -260,6 +267,10 @@ export function finishGame(channelId: string): GameSession | null {
   } catch (err) {
     console.error('Failed to persist match results:', err);
   }
+
+  postGameResults(session).catch(err =>
+    console.error('Failed to post game results embed:', err),
+  );
 
   return session;
 }
