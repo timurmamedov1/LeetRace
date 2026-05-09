@@ -155,6 +155,15 @@ export function setPlayerLeetcode(
   const player = session.players.get(discordId);
   if (!player) throw new Error('Player not in this game');
 
+  // make sure nobody else in the lobby is using this username
+  const duplicate = Array.from(session.players.values()).find(
+    p => p.discordId !== discordId
+      && p.leetcodeUsername?.toLowerCase() === leetcodeUsername.toLowerCase(),
+  );
+  if (duplicate) {
+    throw new Error(`LeetCode username "${leetcodeUsername}" is already taken by another player`);
+  }
+
   player.leetcodeUsername = leetcodeUsername;
   return session;
 }
