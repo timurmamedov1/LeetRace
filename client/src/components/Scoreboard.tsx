@@ -97,14 +97,13 @@ function ResultRow({ player, startedAt, isCurrentUser, index }: {
 }) {
   const completed = player.rank !== null;
 
-  // highlight the current user's row slightly
-  const bgClass = isCurrentUser ? 'bg-discord-blurple/10 border border-discord-blurple/30' : 'bg-discord-secondary';
+  const bgClass = isCurrentUser ? 'bg-discord-secondary border border-discord-blurple/50' : 'bg-discord-secondary';
 
-  // top 3 get special colors for their rank badge
-  const rankColors = ['text-discord-yellow', 'text-gray-300', 'text-amber-600'];
+  // gold, silver, bronze for top 3
+  const rankColors = ['text-[#FFD700]', 'text-[#C0C0C0]', 'text-[#CD7F32]'];
   const rankColor = completed && player.rank! <= 3
     ? rankColors[player.rank! - 1]
-    : 'text-gray-400';
+    : 'text-white';
 
   return (
     <div className={`flex items-center gap-3 rounded-lg px-4 py-3 ${bgClass}`}>

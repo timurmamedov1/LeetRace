@@ -21,13 +21,13 @@ export async function handleLeaderboard(interaction: ChatInputCommandInteraction
     return;
   }
 
-  // format each row: rank, name, W/L record, win %, and streak if > 1
+  // format each row: rank, name, wins/games played, and streak if > 1
   const lines = entries.map((entry, i) => {
+    const streak = entry.currentStreak > 1 ? `  |  Streak: ${entry.currentStreak}` : '';
     const winRate = entry.gamesPlayed > 0
       ? Math.round((entry.wins / entry.gamesPlayed) * 100)
       : 0;
-    const streak = entry.currentStreak > 1 ? `  |  Streak: ${entry.currentStreak}` : '';
-    return `\`${String(i + 1).padStart(2)}.\`  **${entry.username}**  —  ${entry.wins}W ${entry.losses}L  (${winRate}%)${streak}`;
+    return `\`${String(i + 1).padStart(2)}.\`  **${entry.username}** - ${entry.wins} wins / ${entry.gamesPlayed} played (${winRate}%)${streak}`;
   });
 
   const embed = new EmbedBuilder()
