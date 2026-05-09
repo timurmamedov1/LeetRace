@@ -62,6 +62,15 @@ export function getGame(channelId: string): GameSession | undefined {
   return sessions.get(channelId);
 }
 
+// finds which channel a player is currently in, if any.
+// used by the bot to remove players who leave the voice channel
+export function findPlayerChannel(discordId: string): string | null {
+  for (const [channelId, session] of sessions) {
+    if (session.players.has(discordId)) return channelId;
+  }
+  return null;
+}
+
 // adds a player to the lobby. if they're already in, just returns the session
 // (makes it safe to call multiple times without worrying about dupes)
 export function joinGame(

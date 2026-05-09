@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { leaderboardCommand, handleLeaderboard } from './commands/leaderboard';
+import { findPlayerChannel, leaveGame } from '../services/gameManager';
 
 // need GuildVoiceStates to know whos in voice channels for the activity
 export const botClient = new Client({
@@ -36,6 +37,22 @@ export async function startBot() {
 
     if (interaction.commandName === 'leaderboard') {
       await handleLeaderboard(interaction);
+    }
+  });
+
+  // auto-remove players who leave the voice channel so they dont
+  // linger as ghosts in the game
+  botClient.on('voiceStateUpdate', (oldState, newState) => {
+    const leftChannel = oldState.channelId && oldState.channelId !== newState.channelId;
+    if (!leftChannel) return;
+
+    const userId = oldState.member?.id;
+    if (!userId) return;
+
+    const channelId = findPlayerChannel(userId);
+    if (channelId && channelId === oldState.channelId) {
+      leaveGame(channelId, userId);
+      console.log(`Removed ${oldState.member?.user.tag} from game (left voice channel)`);
     }
   });
 
