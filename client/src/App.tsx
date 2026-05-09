@@ -44,11 +44,13 @@ function GameView({ discord }: { discord: DiscordSdkState }) {
     );
   }
 
-  // this happens if everyone left and the session got cleaned up
+  // this happens if everyone left and the session got cleaned up,
+  // or if the server couldnt be reached during init
   if (!game) {
     return (
-      <div className="flex items-center justify-center h-screen bg-discord-tertiary">
-        <p className="text-gray-400 text-lg">No active game</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-discord-tertiary gap-3">
+        <p className="text-gray-400 text-lg">No active game in this channel</p>
+        <p className="text-gray-500 text-sm">Leave and rejoin the activity to start a new one</p>
       </div>
     );
   }

@@ -1,10 +1,13 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { getLeaderboard } from '../../db/queries';
 
+// slash command definition, registered with discord on bot startup
 export const leaderboardCommand = new SlashCommandBuilder()
   .setName('leaderboard')
   .setDescription('Show the top 10 players by wins');
 
+// builds an embed showing top 10 players ranked by wins.
+// only works in a server (not DMs) since stats are per guild
 export async function handleLeaderboard(interaction: ChatInputCommandInteraction) {
   if (!interaction.guildId) {
     await interaction.reply({ content: 'This command only works in a server.', ephemeral: true });
@@ -18,6 +21,7 @@ export async function handleLeaderboard(interaction: ChatInputCommandInteraction
     return;
   }
 
+  // format each row: rank, name, W/L record, win %, and streak if > 1
   const lines = entries.map((entry, i) => {
     const winRate = entry.gamesPlayed > 0
       ? Math.round((entry.wins / entry.gamesPlayed) * 100)

@@ -125,8 +125,6 @@ export async function validateLeetcodeUser(username: string): Promise<boolean> {
   }
 }
 
-// --- submission verification ---
-
 // uses leetcode's public recentAcSubmissionList query to check if a user
 // actually solved the problem. this query works without auth as long as the
 // user's leetcode profile has submissions visible (which is the default)

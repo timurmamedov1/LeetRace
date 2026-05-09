@@ -30,9 +30,9 @@ export async function postGameResults(session: GameSession): Promise<void> {
   const channel = await getChannel(session.channelId);
   if (!channel) return;
 
+  // sort by placement, ppl who didnt finish go to the bottom
   const players = Array.from(session.players.values())
     .sort((a, b) => {
-      // finished players first sorted by rank, then DNFs
       if (a.rank !== null && b.rank !== null) return a.rank - b.rank;
       if (a.rank !== null) return -1;
       if (b.rank !== null) return 1;
@@ -69,6 +69,7 @@ async function getChannel(channelId: string): Promise<TextChannel | null> {
   }
 }
 
+// turns seconds into a readable duration like "5m 30s" or just "5m"
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;

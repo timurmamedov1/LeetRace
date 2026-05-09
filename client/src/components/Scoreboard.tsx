@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { GameSession, Player } from '../types';
 
 interface ScoreboardProps {
   game: GameSession;
   currentUserId: string;
-  onReturnToLobby: () => void;
+  onReturnToLobby: () => Promise<void>;
 }
 
 // ordinal suffix for placement (1st, 2nd, 3rd, etc)
@@ -24,6 +25,16 @@ function formatDuration(startedAt: number, completedAt: number): string {
 
 export default function Scoreboard({ game, currentUserId, onReturnToLobby }: ScoreboardProps) {
   const isHost = game.hostId === currentUserId;
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePlayAgain() {
+    setError(null);
+    try {
+      await onReturnToLobby();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to return to lobby');
+    }
+  }
 
   // sort: completed players first by rank, then DNFs at the bottom
   const sorted = [...game.players].sort((a, b) => {
@@ -61,12 +72,17 @@ export default function Scoreboard({ game, currentUserId, onReturnToLobby }: Sco
 
       {/* host can take everyone back to lobby for another round */}
       {isHost && (
-        <button
-          onClick={onReturnToLobby}
-          className="mt-4 w-full py-3 rounded-lg font-semibold text-lg bg-discord-blurple text-white hover:bg-discord-blurple/80 transition-colors"
-        >
-          Play Again
-        </button>
+        <div className="mt-4 flex flex-col gap-2">
+          {error && (
+            <p className="text-discord-red text-sm">{error}</p>
+          )}
+          <button
+            onClick={handlePlayAgain}
+            className="w-full py-3 rounded-lg font-semibold text-lg bg-discord-blurple text-white hover:bg-discord-blurple/80 transition-colors"
+          >
+            Play Again
+          </button>
+        </div>
       )}
     </div>
   );
