@@ -98,6 +98,33 @@ export function prefetchProblems() {
   }
 }
 
+const MATCHED_USER_QUERY = `
+  query matchedUser($username: String!) {
+    matchedUser(username: $username) { username }
+  }
+`;
+
+// checks if a leetcode username actually exists
+export async function validateLeetcodeUser(username: string): Promise<boolean> {
+  try {
+    const res = await fetch(LEETCODE_GRAPHQL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: MATCHED_USER_QUERY,
+        variables: { username },
+      }),
+    });
+
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    return json.data?.matchedUser !== null;
+  } catch {
+    return false;
+  }
+}
+
 // --- submission verification ---
 
 // uses leetcode's public recentAcSubmissionList query to check if a user

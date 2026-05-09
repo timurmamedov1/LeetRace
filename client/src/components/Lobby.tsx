@@ -35,6 +35,7 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange, 
   const readyCount = game.players.filter(p => p.isReady).length;
   const [lcInput, setLcInput] = useState(currentPlayer?.leetcodeUsername || '');
   const [savingLc, setSavingLc] = useState(false);
+  const [lcError, setLcError] = useState<string | null>(null);
 
   // need at least 2 ppl ready to start a race
   const canStart = readyCount >= 2;
@@ -43,8 +44,14 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange, 
   async function handleSaveLeetcode() {
     if (!lcInput.trim()) return;
     setSavingLc(true);
-    await onSetLeetcodeUsername(lcInput.trim());
-    setSavingLc(false);
+    setLcError(null);
+    try {
+      await onSetLeetcodeUsername(lcInput.trim());
+    } catch (e) {
+      setLcError(e instanceof Error ? e.message : 'Invalid username');
+    } finally {
+      setSavingLc(false);
+    }
   }
 
   return (
@@ -74,6 +81,9 @@ export default function Lobby({ game, currentUserId, onReady, onSettingsChange, 
               {savingLc ? 'Saving...' : 'Save'}
             </button>
           </div>
+          {lcError && (
+            <p className="text-discord-red text-xs mt-2">{lcError}</p>
+          )}
         </div>
       )}
 

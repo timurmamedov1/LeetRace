@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, setLeetcodeUsername } from '../middleware/auth';
 import * as gameManager from '../services/gameManager';
+import { validateLeetcodeUser } from '../services/leetcode';
 
 export const gameRouter = Router();
 
@@ -85,9 +86,9 @@ gameRouter.post('/:channelId/settings', (req, res) => {
   }
 });
 
-// set the player's leetcode username. stored on both the auth user
-// (persists across games) and the current game session
-gameRouter.post('/:channelId/leetcode-username', (req, res) => {
+// set the player's leetcode username. validates that the account actually
+// exists on leetcode before accepting it
+gameRouter.post('/:channelId/leetcode-username', async (req, res) => {
   const user = req.user!;
   const { leetcodeUsername } = req.body;
 
@@ -99,6 +100,12 @@ gameRouter.post('/:channelId/leetcode-username', (req, res) => {
   const trimmed = leetcodeUsername.trim();
 
   try {
+    const exists = await validateLeetcodeUser(trimmed);
+    if (!exists) {
+      res.status(400).json({ error: `LeetCode user "${trimmed}" not found` });
+      return;
+    }
+
     // persist on the auth user so it carries across games
     setLeetcodeUsername(user.discordId, trimmed);
 
