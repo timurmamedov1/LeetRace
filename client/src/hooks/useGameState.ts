@@ -61,17 +61,31 @@ export function useGameState(channelId: string, guildId: string): GameActions {
   useEffect(() => {
     if (loading) return;
 
-    const interval = setInterval(async () => {
+    async function poll() {
       try {
         const state = await fetchApi<GameSession>(`/game/${channelId}`);
         setGame(state);
-      } catch {
-        // 404 probably means everyone left and session got cleaned up
-        setGame(null);
+      } catch (e) {
+        // only clear game state on a real 404 (session gone), not on
+        // network errors from the browser throttling background tabs
+        const is404 = e instanceof Error && e.message.includes('404');
+        if (is404) setGame(null);
       }
-    }, POLL_INTERVAL);
+    }
 
-    return () => clearInterval(interval);
+    const interval = setInterval(poll, POLL_INTERVAL);
+
+    // re-poll immediately when the tab comes back into focus so we
+    // dont sit on stale state after being backgrounded
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') poll();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [channelId, loading]);
 
   const toggleReady = useCallback(async () => {
