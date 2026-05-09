@@ -153,11 +153,8 @@ export default function GameRound({ game, currentUserId, sdk, onComplete }: Game
                   : 'bg-discord-green text-black hover:bg-discord-green/80'
               }`}
             >
-              {submitting ? 'Checking LeetCode...' : 'I Solved It'}
+              {submitting ? 'Verifying...' : 'Submit'}
             </button>
-            <p className="text-gray-500 text-xs text-center">
-              Your LeetCode submission will be verified automatically
-            </p>
           </div>
         )}
       </div>
