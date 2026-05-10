@@ -2,6 +2,8 @@
 
 A Discord activity that allows you to race your friends in solving LeetCode problems.
 
+[Add LeetRace to your server](https://discord.com/oauth2/authorize?client_id=1498751992296771635)
+
 ![Lobby](images/lobby.png)
 
 ## How It Works
