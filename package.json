@@ -10,6 +10,9 @@
     "start": "NODE_ENV=production node server/dist/index.js",
     "typecheck": "npm run typecheck -w client && npm run typecheck -w server"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "concurrently": "^9.1.2",
     "typescript": "^5.7.3"
