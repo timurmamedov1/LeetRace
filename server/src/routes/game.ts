@@ -25,6 +25,22 @@ gameRouter.post('/create', (req, res) => {
   const { channelId, guildId, difficulty, timeLimitSeconds } = req.body;
   const user = req.user!;
 
+  // validate inputs, the create path used to trust these blindly. a bad
+  // difficulty makes the round unstartable and a wild time limit overflows
+  // setTimeout (huge values wrap around and end the round instantly)
+  if (!channelId || !guildId) {
+    res.status(400).json({ error: 'Missing channelId or guildId' });
+    return;
+  }
+  if (difficulty !== undefined && !gameManager.DIFFICULTIES.includes(difficulty)) {
+    res.status(400).json({ error: 'Invalid difficulty' });
+    return;
+  }
+  if (timeLimitSeconds !== undefined && !gameManager.VALID_TIME_LIMITS.includes(timeLimitSeconds)) {
+    res.status(400).json({ error: 'Invalid time limit' });
+    return;
+  }
+
   try {
     const session = gameManager.createGame(
       channelId, guildId,

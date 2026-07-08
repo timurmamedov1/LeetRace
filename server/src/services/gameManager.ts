@@ -13,7 +13,11 @@ const sessions = new Map<string, GameSession>();
 const gameTimers = new Map<string, NodeJS.Timeout>();
 
 // the allowed time limits in seconds (5, 10, 15, 20, 30 min)
-const VALID_TIME_LIMITS = [300, 600, 900, 1200, 1800];
+export const VALID_TIME_LIMITS = [300, 600, 900, 1200, 1800];
+
+// the valid difficulties as a runtime list, so routes can validate input
+// against it (the Difficulty type only exists at compile time)
+export const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
 // creates a new lobby session. the person who calls this becomes host.
 // if theres already a session in this channel it gets replaced
@@ -144,7 +148,11 @@ export function updateSettings(
   if (session.hostId !== hostId) throw new Error('Only the host can change settings');
   if (session.state !== 'lobby') throw new Error('Cannot change settings during a game');
 
-  if (settings.difficulty) session.difficulty = settings.difficulty;
+  // ignore bogus values instead of throwing, matches how time limit was
+  // already handled here
+  if (settings.difficulty && DIFFICULTIES.includes(settings.difficulty)) {
+    session.difficulty = settings.difficulty;
+  }
   if (settings.timeLimitSeconds && VALID_TIME_LIMITS.includes(settings.timeLimitSeconds)) {
     session.timeLimitSeconds = settings.timeLimitSeconds;
   }
