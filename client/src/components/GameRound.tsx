@@ -35,7 +35,10 @@ export default function GameRound({ game, currentUserId, sdk, onComplete }: Game
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const currentPlayer = game.players.find(p => p.discordId === currentUserId);
-  const hasCompleted = currentPlayer?.completedAt !== null;
+  // guard for currentPlayer being missing, e.g. we got removed from the session
+  // mid round (left voice). `undefined?.completedAt !== null` was truthy which
+  // then crashed on currentPlayer!.rank in the render below
+  const hasCompleted = !!currentPlayer?.completedAt;
 
   // countdown timer, recalculates from the server's startedAt timestamp
   // so it stays accurate even if the client is slow or tab was backgrounded
@@ -135,9 +138,9 @@ export default function GameRound({ game, currentUserId, sdk, onComplete }: Game
 
       {/* submit button or completion status */}
       <div className="mt-4">
-        {hasCompleted ? (
+        {currentPlayer && hasCompleted ? (
           <div className="w-full py-3 rounded-lg text-center bg-discord-green/20 text-discord-green font-semibold text-lg border border-discord-green/30">
-            Verified, {ordinal(currentPlayer!.rank!)} place
+            Verified, {ordinal(currentPlayer.rank!)} place
           </div>
         ) : (
           <div className="flex flex-col gap-2">
