@@ -10,7 +10,7 @@ import { authRouter } from './routes/auth';
 import { gameRouter } from './routes/game';
 import { startBot } from './bot';
 import { prefetchProblems } from './services/leetcode';
-import { initDatabase } from './db/database';
+import { initDatabase, getDatabase } from './db/database';
 
 const app = express();
 app.use(cors());
@@ -22,6 +22,24 @@ app.use('/api/game', gameRouter);  // lobby/game state management
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+// TEMP: throwaway endpoint to pull production usage numbers off the railway
+// volume. aggregate counts only, no usernames/PII so its fine unauthenticated.
+// REMOVE this once we've grabbed the numbers.
+app.get('/api/stats', (_req, res) => {
+  const db = getDatabase();
+  const one = (sql: string) => (db.prepare(sql).get() as { v: number | string | null }).v;
+  res.json({
+    servers: one('SELECT COUNT(DISTINCT guild_id) v FROM users'),
+    users: one('SELECT COUNT(DISTINCT discord_id) v FROM users'),
+    userRows: one('SELECT COUNT(*) v FROM users'),
+    matches: one('SELECT COUNT(*) v FROM match_history'),
+    playerResults: one('SELECT COUNT(*) v FROM match_results'),
+    firstMatch: one('SELECT MIN(created_at) v FROM match_history'),
+    lastMatch: one('SELECT MAX(created_at) v FROM match_history'),
+    byDifficulty: db.prepare('SELECT difficulty, COUNT(*) c FROM match_history GROUP BY difficulty').all(),
+  });
 });
 
 // in production, serve the built client files from express directly.
